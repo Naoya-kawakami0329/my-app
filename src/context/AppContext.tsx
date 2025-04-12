@@ -1,5 +1,8 @@
-import { User } from "firebase/auth";
-import { createContext, ReactNode, useState } from "react";
+"use client"
+
+import { auth } from "@/app/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 type AppProviderProps={
     children:ReactNode;
@@ -27,7 +30,20 @@ export function AppProvider({children}:AppProviderProps){
     const [userId,setUserId]=useState<string | null>(null);
     const [selectedRoom,setSelectedRoom]=useState<string | null>(null);
 
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (newUser) => {
+          setUser(newUser);
+          setUserId(newUser ? newUser.uid : null);
+        });
+        return () => unsubscribe();
+      }, []);
+
+
     return (
         <AppContext.Provider value={{user,setUser,userId,selectedRoom,setSelectedRoom}}>{children}</AppContext.Provider>
     )
 };
+
+export function useAppContext(){
+    return useContext(AppContext)
+}

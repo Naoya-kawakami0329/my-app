@@ -4,6 +4,7 @@ import { collection,onSnapshot,orderBy,query, Timestamp, where } from 'firebase/
 import React, { useEffect, useState } from 'react'
 import { SlLogout } from "react-icons/sl";
 import { db } from '../firebase';
+import { useAppContext } from '@/context/AppContext';
 
 type Room={
   id:string;
@@ -12,6 +13,9 @@ type Room={
 }
 
 const Sidebar = () => {
+  const {user,userId}=useAppContext();
+  console.log(userId)
+  console.log("aaaaa")
 const[rooms,setRooms]=useState<Room[]>([])
 
   useEffect(()=>{
@@ -26,9 +30,15 @@ const[rooms,setRooms]=useState<Room[]>([])
       }))
      setRooms(newRooms);
     })
+    return ()=>{
+      unsubscribe();
+    }
   }
-fetchRooms()
+fetchRooms();
+
   },[])
+
+  
 
 
   return (
