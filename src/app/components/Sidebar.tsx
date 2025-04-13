@@ -14,29 +14,29 @@ type Room={
 
 const Sidebar = () => {
   const {user,userId}=useAppContext();
-  console.log(userId)
-  console.log("aaaaa")
 const[rooms,setRooms]=useState<Room[]>([])
 
   useEffect(()=>{
-  const fetchRooms=async()=>{
-    const roomCollectionRef=collection(db,"rooms")
-    const q=query(roomCollectionRef,where("userId","==","PWqUpVuEpNU235GOHaK3ZULUKpp2"),orderBy("createdAt"))
-    const unsubscribe=onSnapshot(q,(snapshot)=>{
-      const newRooms:Room[]=snapshot.docs.map((doc)=>({
-        id:doc.id,
-        name:doc.data().name,
-        createdAt:doc.data().createdAt
-      }))
-     setRooms(newRooms);
-    })
-    return ()=>{
-      unsubscribe();
+    if(user){
+      const fetchRooms=async()=>{
+      const roomCollectionRef=collection(db,"rooms")
+      const q=query(roomCollectionRef,where("userId","==",userId),orderBy("createdAt"))
+      const unsubscribe=onSnapshot(q,(snapshot)=>{
+        const newRooms:Room[]=snapshot.docs.map((doc)=>({
+          id:doc.id,
+          name:doc.data().name,
+          createdAt:doc.data().createdAt
+        }))
+       setRooms(newRooms);
+      })
+      return ()=>{
+        unsubscribe();
+      }
     }
-  }
-fetchRooms();
+  fetchRooms();}
+  
 
-  },[])
+  },[userId])
 
   
 
