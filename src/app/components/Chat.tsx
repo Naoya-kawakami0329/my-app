@@ -12,29 +12,30 @@ type Message={
   createdAt:Timestamp
 }
 const Chat = () => {
-  const {selectedRoom}=useAppContext();
+  const {selectedRoom, userId}=useAppContext();
   const [inputMessage,setInputMessage]=useState<string>("");
-  const [message,setMessage]=useState<Message[]>([]);
+  const [messages,setMessage]=useState<Message[]>([]);
 
   //各roomにおけるメッセージを取得
-  useEffect(()=>{
-if(selectedRoom){
-      const fetchMessages=async()=>{
-      const roomDocRef=doc(db,"rooms")
-      const messagesCollectionRef=collection(roomDocRef,"messsages");
-      const q=query(messagesCollectionRef,orderBy("createdAt"))
-      const unsubscribe=onSnapshot(q,(snapshot)=>{
-       const newMessages=snapshot.docs.map((doc)=>doc.data() as Message)
-       setMessage(newMessages)
-    })
-    return ()=>{
-      unsubscribe();
-    }
-  }
-  fetchMessages()
-  }},[selectedRoom])
+  useEffect(() => {
+    if (!selectedRoom || !userId) return; //  どちらも揃ったときのみ
+  
+    const roomDocRef = doc(db, "rooms", selectedRoom);
+    const messagesCollectionRef = collection(roomDocRef, "messages");
+    const q = query(messagesCollectionRef, orderBy("createdAt"));
+  
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const newMessages = snapshot.docs.map((doc) => doc.data() as Message);
+      setMessage(newMessages);
+    });
+  
+    return () => unsubscribe();
+  }, [selectedRoom]);
 
+  
+  
   const sendMessage=async()=>{
+    if (!inputMessage.trim() || !selectedRoom) return; 
     if(!inputMessage.trim()) return;
     const messageData={
       text:inputMessage,
@@ -44,7 +45,7 @@ if(selectedRoom){
 
     //メッセージをFirestoreに保存
     const roomDocRef=doc(db,"rooms",
-      "sZPGRTCLRKkELgKVCyOd")
+      selectedRoom)
     const messageCollectionRef=collection(roomDocRef,"messages")
     await addDoc(messageCollectionRef,messageData)
     
@@ -53,18 +54,15 @@ if(selectedRoom){
     <div className='bg-gray-500 h-full p-4 flex flex-col'>
       <h1 className='tezt-2xl text-white font-semibold mb-4'>room1</h1>
       <div className='flex-grow overflow-y-auto mb-4'>
-        <div className='text-right'> 
-            <div className='bg-blue-500 inline-block rounded px-4 py-2 mb-2'>
-               <p className='text-white font-medium'>Hello</p> 
-            </div>
+      {messages.map((message,index)=>(
+        <div key={index} className={message.sender==="user" ? "text-right" : "text-left"}>
+          <div className={message.sender==="user" ?  'bg-blue-500 inline-block rounded px-4 py-2 mb-2':'bg-green-500 inline-block rounded px-4 py-2 mb-2' }>
+<p className="text-white">{message.text}</p>
+          </div>
         </div>
-        <div className='text-left'> 
-            <div className='bg-green-500 inline-block rounded px-4 py-2 mb-2'>
-               <p className='text-white font-medium'>How are you?</p> 
-            </div>
-        </div>
+      ))}
       </div>
-      <div className='flex-shrink-0 relative'>
+       <div className='flex-shrink-0 relative'>
         <input 
         type="text" 
         placeholder='send a message' 
@@ -78,6 +76,7 @@ if(selectedRoom){
         </button>
       </div>
     </div>
+  
   )
 }
 

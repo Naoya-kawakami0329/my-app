@@ -13,30 +13,38 @@ type Room={
 }
 
 const Sidebar = () => {
-  const {user,userId}=useAppContext();
+  const {user,userId,setSelectedRoom}=useAppContext();
 const[rooms,setRooms]=useState<Room[]>([])
 
-  useEffect(()=>{
-    if(user){
-      const fetchRooms=async()=>{
-      const roomCollectionRef=collection(db,"rooms")
-      const q=query(roomCollectionRef,where("userId","==",userId),orderBy("createdAt"))
-      const unsubscribe=onSnapshot(q,(snapshot)=>{
-        const newRooms:Room[]=snapshot.docs.map((doc)=>({
-          id:doc.id,
-          name:doc.data().name,
-          createdAt:doc.data().createdAt
-        }))
-       setRooms(newRooms);
-      })
-      return ()=>{
-        unsubscribe();
-      }
-    }
-  fetchRooms();}
+useEffect(() => {
   
+  console.log("userId:", userId);
+  if (!userId) return; // ← ここで userId が null のときはスキップ
 
-  },[userId])
+  const roomCollectionRef = collection(db, "rooms");
+  const q = query(
+    roomCollectionRef,
+    where("userId", "==", userId),
+    orderBy("createdAt")
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const newRooms: Room[] = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      name: doc.data().name,
+      createdAt: doc.data().createdAt,
+    }));
+    setRooms(newRooms);
+  });
+
+  return () => unsubscribe();
+}, [userId]);
+
+
+  const selectRoom=(roomId:string)=>{
+    setSelectedRoom(roomId)
+    console.log(roomId)
+  }
 
   
 
@@ -50,7 +58,10 @@ const[rooms,setRooms]=useState<Room[]>([])
         </div>
         <ul>
         {rooms.map((room)=>(
-          <li key={room.id} className='cursor-pointer border-b p-4 text-slate-100 hover:bg-slate-700 duration-150'>{room.name}</li>
+          <li key={room.id}
+           className='cursor-pointer border-b p-4 text-slate-100 hover:bg-slate-700 duration-150'
+           onClick={()=>selectRoom(room.id)}
+           >{room.name}</li>
 ) )}
         </ul>
       </div>
