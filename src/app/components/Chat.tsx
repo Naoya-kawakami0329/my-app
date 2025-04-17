@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react'
 import { FaPaperPlane } from "react-icons/fa6";
 import { db } from '../firebase';
 import { useAppContext } from '@/context/AppContext';
+import OpenAI from 'openai';
 
 type Message={
   text:string;
@@ -12,6 +13,12 @@ type Message={
   createdAt:Timestamp
 }
 const Chat = () => {
+
+  const openai=new OpenAI({
+    apiKey:process.env.NEXT_PUBLIC_OPENAI_KEY,
+    dangerouslyAllowBrowser:true
+  })
+  
   const {selectedRoom, userId}=useAppContext();
   const [inputMessage,setInputMessage]=useState<string>("");
   const [messages,setMessage]=useState<Message[]>([]);
@@ -20,7 +27,7 @@ const Chat = () => {
   useEffect(() => {
     if (!selectedRoom || !userId) return; //  どちらも揃ったときのみ
   
-    const roomDocRef = doc(db, "rooms", selectedRoom);
+    const roomDocRef = doc(db, "rooms", selectedRoom!);
     const messagesCollectionRef = collection(roomDocRef, "messages");
     const q = query(messagesCollectionRef, orderBy("createdAt"));
   
@@ -47,8 +54,19 @@ const Chat = () => {
     const roomDocRef=doc(db,"rooms",
       selectedRoom)
     const messageCollectionRef=collection(roomDocRef,"messages")
-    await addDoc(messageCollectionRef,messageData)
-    
+    await addDoc(messageCollectionRef,messageData);
+
+    //OpenAiからの返信
+    const gpt3Response=await openai.chat.completions.create({
+messages:[{role:"user",content:inputMessage}],
+model:"gpt-3.5-turbo",
+    })
+    const botResponse=gpt3Response.choices[0].message.content;
+    await addDoc(messageCollectionRef,{
+      text:botResponse,
+      sender:"bot",
+      createdAt:serverTimestamp(),
+    });
   }
   return (
     <div className='bg-gray-500 h-full p-4 flex flex-col'>
