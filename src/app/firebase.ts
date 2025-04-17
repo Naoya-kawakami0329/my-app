@@ -21,7 +21,7 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 
 // Initialize Analytics (ブラウザ環境でのみ実行)
-export let analytics: any = null;
+export let analytics: unknown= null;
 if (typeof window !== "undefined") {
   isSupported().then((supported) => {
     if (supported) {
